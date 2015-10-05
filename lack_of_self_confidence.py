@@ -1,7 +1,6 @@
-import os, json, logging, twilio.twiml
+import os, json, logging, tornado.web, twilio.twiml
 from sys import argv, exit
 from time import sleep
-from tornado.web import RequestHandler
 
 from core.api import MPServerAPI
 from core.vars import DEFAULT_TELEPHONE_GPIO, UNPLAYABLE_FILES
@@ -24,16 +23,20 @@ class LackOfSelfConfidence(MPServerAPI):
 		MPServerAPI.__init__(self)
 
 		self.gpio_mappings = DEFAULT_TELEPHONE_GPIO
-		self.routes.append((r'/mapping$', self.TwilioMappingHandler))
+		self.routes.extend([
+			(r'/mapping$', self.TwilioMappingHandler),
+			(r'/media/(.*\.wav)', tornado.web.StaticFileHandler, \
+				{ 'path' : os.path.join(self.conf['media_dir'], "prompts") })
+		])
 
 		logging.basicConfig(filename=self.conf['d_files']['module']['log'], level=logging.DEBUG)
 
-	class TwilioMappingHandler(RequestHandler):
+	class TwilioMappingHandler(tornado.web.RequestHandler):
 		def get(self):
 			logging.debug("here is a mapping from twilio")
 			key = self.request.body['Digits']
 			
-			return self.on_key_pressed(key)
+			return self.application.on_key_pressed(key)
 
 	def hear_hold_music(self):
 		return False
@@ -41,7 +44,7 @@ class LackOfSelfConfidence(MPServerAPI):
 	def choose_main_menu(self):
 		result = twilio.twiml.Response()
 		with result.gather(numDigits=1, action="/mapping", method="GET") as g:
-			g.play(PROMPTS['choose_main_menu'])
+			g.play(os.path.join("media", PROMPTS['choose_main_menu']))
 
 		return str(result)
 

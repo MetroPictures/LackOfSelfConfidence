@@ -5,3 +5,5 @@ config.json
 
 media/*
 !media/dtmf
+
+.monitor/
