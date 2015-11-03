@@ -4,6 +4,8 @@ from time import sleep
 
 from core.api import MPServerAPI
 
+BASE_URL = "http://107.21.110.110:49157"
+
 ONE = 1
 TWO = 2
 THREE = 3
@@ -121,7 +123,7 @@ class LackOfSelfConfidence(MPServerAPI):
 
 		self.routes.extend([
 			(r'/mapping$', self.TwilioMappingHandler),
-			(r'/media/(.*\.wav)', tornado.web.StaticFileHandler, \
+			(r'/media/(.*\.mp3)', tornado.web.StaticFileHandler, \
 				{ 'path' : os.path.join(self.conf['media_dir'], "prompts") })
 		])
 
@@ -133,7 +135,10 @@ class LackOfSelfConfidence(MPServerAPI):
 			key = self.get_argument('Digits', None, True)
 			session_id = self.get_argument('From', None, True)
 
-			return self.application.on_key_pressed(key, session_id)
+			response = self.application.on_key_pressed(key, session_id)
+			logging.debug(str(response))
+
+			self.finish(str(response))
 
 	def __twilio_prompt(self, prompt):
 		result = twilio.twiml.Response()
@@ -141,20 +146,20 @@ class LackOfSelfConfidence(MPServerAPI):
 		with result.addGather(numDigits=1, action="/mapping", method="GET") as g:
 			g.play(os.path.join("media", "%s.mp3" % prompt))
 
-		return str(result)
+		return result
 
 	def __twilio_say(self, prompt):
 		result = twilio.twiml.Response()
 		result.play(os.path.join("media", "%s.mp3" % prompt))
 
-		return str(result)
+		return result
 
 	def __twilio_redirect(self, prompt):
 		result = twilio.twiml.Response()
 		result.addPlay(os.path.join("media", "%s.mp3" % prompt))
-		result.addRedirect("%s/mapping/" % BASE_URL)
+		result.addRedirect("%s/mapping" % BASE_URL)
 
-		return str(result)
+		return result
 
 	def __twilio_hangup(self, prompt):
 		result = twilio.twiml.Response()
@@ -164,10 +169,11 @@ class LackOfSelfConfidence(MPServerAPI):
 		
 		result.addHangup()
 
-		return str(result)
+		super(LackOfSelfConfidence, self).on_hang_up()
+		return result
 	
-	def route_next(self, session_id):
-		if session_id is None:
+	def route_next(self, session_id, init=False):
+		if init:
 			prompt = '1_LackofSelfConfidenceMenu'
 		else:
 			prompt = self.db.get(session_id)
@@ -186,7 +192,7 @@ class LackOfSelfConfidence(MPServerAPI):
 		print "OK KEY: %s (type %s)" % (key, type(key))
 		print "FROM SESSION ID %s" % session_id
 
-		key = (key - 1)
+		key = (int(key) - 1)
 
 		try:
 			last_prompt = self.db.get(session_id)
@@ -197,6 +203,12 @@ class LackOfSelfConfidence(MPServerAPI):
 		if not last_prompt:
 			last_prompt = '1_LackofSelfConfidenceMenu'
 
+		print "LAST PROMPT: %s" % last_prompt
+		print "ITS KEYS: %s" % KEY_MAP[last_prompt]
+
+		if KEY_MAP[last_prompt] is None:
+			return self.__twilio_hangup(last_prompt)
+
 		if key not in range(len(KEY_MAP[last_prompt])):
 			next_prompt = last_prompt
 		else:
@@ -205,8 +217,11 @@ class LackOfSelfConfidence(MPServerAPI):
 		if next_prompt is None:
 			next_prompt = last_prompt
 
+		print "NEXT_PROMPT: %s" % next_prompt
+		print "ITS KEYS: %s" % KEY_MAP[next_prompt]
+
 		try:
-			self.db.put(session_id, next_prompt)
+			self.db.set(session_id, next_prompt)
 			return self.route_next(session_id)
 		except Exception as e:
 			logging.error("could not grab a prompt code for %s : %d" % \
@@ -214,17 +229,11 @@ class LackOfSelfConfidence(MPServerAPI):
 
 			print e, type(e)
 
-		return self.on_hang_up()
+		return self.__twilio_hangup(None)
 
-	def on_hang_up(self):
-		if super(LackOfSelfConfidence, self).on_hang_up()['ok']:
-			return self.__twilio_hangup(None)
-
-	def on_pick_up(self):
-		if super(LackOfSelfConfidence, self).on_pick_up()['ok']:
-			return self.route_next(None)
-
-		return self.on_hang_up()
+	def on_pick_up(self, session_id):
+		self.db.delete(session_id)
+		return str(self.route_next(session_id, init=True))
 
 if __name__ == "__main__":
 	res = False
