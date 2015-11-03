@@ -4,7 +4,7 @@ from time import sleep
 
 from core.api import MPServerAPI
 
-BASE_URL = "http://107.21.110.110:49157"
+BASE_URL = "http://107.21.110.110:49159"
 
 ONE = 1
 TWO = 2
@@ -157,7 +157,7 @@ class LackOfSelfConfidence(MPServerAPI):
 	def __twilio_redirect(self, prompt):
 		result = twilio.twiml.Response()
 		result.addPlay(os.path.join("media", "%s.mp3" % prompt))
-		result.addRedirect("%s/mapping" % BASE_URL)
+		result.addRedirect("%s/mapping" % BASE_URL, method="GET")
 
 		return result
 
@@ -190,9 +190,7 @@ class LackOfSelfConfidence(MPServerAPI):
 	def on_key_pressed(self, key, session_id):
 		# route to next func on stack
 		print "OK KEY: %s (type %s)" % (key, type(key))
-		print "FROM SESSION ID %s" % session_id
-
-		key = (int(key) - 1)
+		print "FROM SESSION ID %s" % session_id			
 
 		try:
 			last_prompt = self.db.get(session_id)
@@ -209,10 +207,14 @@ class LackOfSelfConfidence(MPServerAPI):
 		if KEY_MAP[last_prompt] is None:
 			return self.__twilio_hangup(last_prompt)
 
-		if key not in range(len(KEY_MAP[last_prompt])):
-			next_prompt = last_prompt
-		else:
-			next_prompt = KEY_MAP[last_prompt][key]
+		next_prompt = None
+		
+		if key is not None:
+			key = (int(key) - 1)
+			if key not in range(len(KEY_MAP[last_prompt])):
+				next_prompt = last_prompt
+			else:
+				next_prompt = KEY_MAP[last_prompt][key]
 
 		if next_prompt is None:
 			next_prompt = last_prompt
