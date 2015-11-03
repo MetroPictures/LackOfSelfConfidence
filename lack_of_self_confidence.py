@@ -4,93 +4,115 @@ from time import sleep
 
 from core.api import MPServerAPI
 
-MINUS_KEY = 1
-POUND_KEY = 2
-PLUS_KEY = 3
-SLASH_KEY = 4
+ONE = 1
+TWO = 2
+THREE = 3
+FOUR = 4
 
 KEY_MAP = {
-	'choose_main_menu' : [
-		(MINUS_KEY, 'choose_somebody_impressed_you', 'gather'), 
-		(POUND_KEY, 'choose_you_are_a_criminal', 'gather'), 
-		(PLUS_KEY, 'choose_tattoo_out_of_style', 'gather'), 
-		(SLASH_KEY, 'choose_body_image', 'gather')
+	'1_LackofSelfConfidenceMenu':[
+		'2_SomebodyImpressedYouMenu',
+		'10_YouAreACriminalMenu',
+		'23_TattooOutofStyleMenu',
+		'28_BodyImageMenu'
 	],
-	'choose_somebody_impressed_you' : [
-		(MINUS_KEY, 'choose_in_a_movie', 'gather'),
-		(SLASH_KEY, 'choose_at_a_party', 'gather'),
-		(POUND_KEY, 'hear_trying_very_hard', 'terminus')
+	'2_SomebodyImpressedYouMenu':[
+		'3_InAMovieMenu',
+		'9_ButTryingVeryHardEnd',
+		'2_SomebodyImpressedYouMenu',
+		'6_AtAPartyMenu',
 	],
-	'choose_you_are_a_criminal' : [
-		(POUND_KEY, 'choose_reading', 'gather'),
-		(PLUS_KEY, 'choose_exercise', 'reroute', {
-			'next_route' : 'choose_main_menu',
-			'play_music' : True
-		})
+	'3_InAMovieMenu':[
+		'3_InAMovieMenu',
+		'4_TooSmartEnd',
+		'5_TooSuccessfulEnd',
+		'3_InAMovieMenu'	#too beautiful missing?
 	],
-	'choose_reading' : [
-		(POUND_KEY, 'hear_political_text', 'reroute', {
-			'next_route' : 'choose_main_menu',
-			'play_music' : True
-		}),
-		(SLASH_KEY, 'hear_religious_text', 'terminus')
+	'4_TooSmartEnd':None,
+	'5_TooSuccessfulEnd':None,
+	'6_AtAPartyMenu':[
+		'7_MoreSociallyAdeptEnd',
+		'6_AtAPartyMenu',
+		'8_NotThrowUpEnd',
+		'7_MoreSociallyAdeptEnd'
 	],
-	'choose_tattoo_out_of_style' : [
-		(POUND_KEY, 'choose_corset_legs', 'reroute', 'choose_main_menu'),
-		(PLUS_KEY, 'hear_mom', 'terminus'),
-		(SLASH_KEY, 'hear_tribal_tattoos', 'terminus'),
-		(MINUS_KEY, 'choose_so_called_tramp_stamp', 'reroute', {
-			'next_route' : 'choose_body_image',
-			'play_music' : True
-		})
+	'7_MoreSociallyAdeptEnd':None,
+	'8_NotThrowUpEnd':'1_LackofSelfConfidenceMenu',
+	'9_ButTryingVeryHardEnd':None,
+	'10_YouAreACriminalMenu':[
+		'10_YouAreACriminalMenu',
+		'11_ReadingMenu',
+		'15_EmpathyTrainingMenu',
+		'14_ExerciseEnd'
 	],
-	'choose_body_image' : [
-		(POUND_KEY, 'hear_suffer_from_invisibility', 'terminus'),
-		(SLASH_KEY, 'hear_specific_body_part', 'terminus'),
-		(MINUS_KEY, 'hear_overall_shape', 'reroute', {
-			'next_route' : 'choose_main_menu',
-			'play_music' : True
-		}),
-		(PLUS_KEY, 'choose_hair', 'gather')
+	'11_ReadingMenu':[
+		'11_ReadingMenu',
+		'12_PoliticsReadingEnd',
+		'11_ReadingMenu',
+		'13_ReligiousReadingEnd'
 	],
-	'choose_in_a_movie' : [
-		(POUND_KEY, 'hear_too_smart', 'terminus'),
-		(SLASH_KEY, 'hear_too_beautiful', 'reroute', {
-			'next_route' : 'choose_body_image',
-			'play_music' : True
-		}),
-		(PLUS_KEY, 'hear_too_successful', 'terminus')
+	'12_PoliticsReadingEnd':'1_LackofSelfConfidenceMenu',
+	'13_ReligiousReadingEnd':None,
+	'14_ExerciseEnd':'1_LackofSelfConfidenceMenu',
+	'15_EmpathyTrainingMenu':[
+		'15_EmpathyTrainingMenu',
+		'22_DelayGratificationEnd',
+		'16_ParaphraseMenu'
 	],
-	'choose_at_a_party' : [
-		(MINUS_KEY, 'hear_more_socially_adept', 'terminus'),
-		(PLUS_KEY, 'hear_throw_up', 'reroute', {
-			'next_route' : 'choose_main_menu',
-			'play_music' : True
-		}),
-		(SLASH_KEY, 'hear_too_successful', 'terminus')
+	'16_ParaphraseMenu':[
+		'17_TheRatAteTheMaltMenu',
+		'16_ParaphraseMenu',
+		'20_TheRatChasedTheCatMenu',
+		'20_TheRatChasedTheCatMenu'
 	],
-	'choose_empathy_training' : [
-		(PLUS_KEY, 'choose_paraphrase', 'gather'),
-		(POUND_KEY, 'hear_delay_gratification', 'terminus')
+	'17_TheRatAteTheMaltMenu':[
+		'18_BuffaloMenu',
+		'18_BuffaloMenu',
+		'18_BuffaloMenu',
+		'18_BuffaloMenu'
 	],
-	'choose_paraphrase' : [
-		(MINUS_KEY, 'choose_rat_ate_the_malt', 'gather'),
-		(SLASH_KEY, 'choose_wrong_paraphrase', 'gather'),
-		(PLUS_KEY, 'choose_wrong_paraphrase', 'gather')
+	'18_BuffaloMenu':[
+		'19_BuffaloEnd',
+		'18_BuffaloMenu',
+		'19_BuffaloEnd',
+		'19_BuffaloEnd'
 	],
-	'choose_rat_ate_the_malt' : [
-		(PLUS_KEY, 'choose_men_women_nothing', ''),
-		(POUND_KEY, 'choose_nothing_nothing_nothing', ''),
-		(MINUS_KEY, 'choose_without_man_woman', '')
+	'19_BuffaloEnd':None,
+	'20_TheRatChasedTheCatMenu':[
+		'21_TryAgainNoEnd',
+		'16_ParaphraseMenu'
 	],
-	'choose_wrong_paraphrase' : [
-		(POUND_KEY, 'null_silence', 'reroute', {'next_route' : 'choose_paraphrase'}),
-		(MINUS_KEY, 'null_silence', 'terminus')
+	'21_TryAgainNoEnd':None,
+	'22_DelayGratificationEnd':None,
+	'23_TattooOutofStyleMenu':[
+		'27_TrampStampEnd',
+		'24_CorsetLegsEnd',
+		'25_MomEnd',
+		'26_TribalTattooEnd'
 	],
-	'choose_rat_cat_dog' : [],
-	'choose_men_women_nothing' : [],
-	'choose_nothing_nothing_nothing' : [],
-	'choose_without_man_woman' : []
+	'24_CorsetLegsEnd':'1_LackofSelfConfidenceMenu',
+	'25_MomEnd':None,
+	'26_TribalTattooEnd':None,
+	'27_TrampStampEnd':'28_BodyImageMenu',
+	'28_BodyImageMenu':[
+		'31_OverallShapeEnd',
+		'29_InvisibilityEnd',
+		'32_HairMenu',
+		'30_SpecificBodyPartEnd'
+	],
+	'29_InvisibilityEnd':'1_LackofSelfConfidenceMenu',
+	'30_SpecificBodyPartEnd':None,
+	'31_OverallShapeEnd':'1_LackofSelfConfidenceMenu',
+	'32_HairMenu':[
+		'36_TooDryEnd',
+		'35_TooStraightEnd',
+		'33_TooTanglyEnd',
+		'34_TooCurlyEnd'
+	],
+	'33_TooTanglyEnd':'1_LackofSelfConfidenceMenu',
+	'34_TooCurlyEnd':'1_LackofSelfConfidenceMenu',
+	'35_TooStraightEnd':'1_LackofSelfConfidenceMenu',
+	'36_TooDryEnd':'1_LackofSelfConfidenceMenu',
 }
 
 class LackOfSelfConfidence(MPServerAPI):
@@ -113,84 +135,96 @@ class LackOfSelfConfidence(MPServerAPI):
 
 			return self.application.on_key_pressed(key, session_id)
 
-	def __twilio_gather(self, extras):
+	def __twilio_prompt(self, prompt):
 		result = twilio.twiml.Response()
 
 		with result.addGather(numDigits=1, action="/mapping", method="GET") as g:
-			g.play(os.path.join("media", "%s.wav" % self.db.get(extras['session_id'])))
+			g.play(os.path.join("media", "%s.mp3" % prompt))
 
 		return str(result)
 
-	def __twilio_terminus(self, extras):
+	def __twilio_say(self, prompt):
 		result = twilio.twiml.Response()
-
-		result.addPlay(os.path.join("media", "%s.wav" % self.db.get("current_route")))
-		result.addPlay(os.path.join("media", "end_music.wav"))
-
-		return str(self.on_hang_up(result))
-
-	def __twilio_reroute(self, extras):
-		result = twilio.twiml.Response()
-		
-		result.addPlay(os.path.join("media", "%s.wav" % self.db.get("current_route")))
-
-		if 'play_music' in extras.keys() and extras['play_music']:
-			result.addPlay(os.path.join("media", "end_music.wav"))
-		if 'next_route' in extras.keys():
-			self.db.set(extras['session_id'], extras['next_route'])
+		result.play(os.path.join("media", "%s.mp3" % prompt))
 
 		return str(result)
 
-	def __route_next(self, prompt_code, extras):
-		try:
-			route = KEY_MAP[prompt_code]
-			if route is None:
-				return self.on_hang_up()
+	def __twilio_redirect(self, prompt):
+		result = twilio.twiml.Response()
+		result.addPlay(os.path.join("media", "%s.mp3" % prompt))
+		result.addRedirect("%s/mapping/" % BASE_URL)
 
-			self.db.set(extras['session_id'], prompt_code)
-			return getattr(self, "__twilio_%s" % KEY_MAP[prompt_code][2])(extras)
+		return str(result)
+
+	def __twilio_hangup(self, prompt):
+		result = twilio.twiml.Response()
+
+		if prompt is not None:
+			result.addPlay(os.path.join("media", "%s.mp3" % prompt))
 		
-		except Exception as e:
-			logging.error("could not route next!")
-			print e, type(e)
+		result.addHangup()
 
-		return self.on_hang_up()
+		return str(result)
+	
+	def route_next(self, session_id):
+		if session_id is None:
+			prompt = '1_LackofSelfConfidenceMenu'
+		else:
+			prompt = self.db.get(session_id)
+
+		if KEY_MAP[prompt] is None:
+			return self.__twilio_hangup(prompt)
+
+		if type(KEY_MAP[prompt]) in [str, unicode]:
+			self.db.set(session_id, KEY_MAP[prompt])
+			return self.__twilio_redirect(prompt)
+
+		return self.__twilio_gather(prompt)
 
 	def on_key_pressed(self, key, session_id):
 		# route to next func on stack
 		print "OK KEY: %s (type %s)" % (key, type(key))
+		print "FROM SESSION ID %s" % session_id
+
+		key = (key - 1)
 
 		try:
-			extras = { 'session_id' : session_id }
-			
-			if len(p) == 4:
-				extras.extend(p[3])
+			last_prompt = self.db.get(session_id)
+		except Exception as e:
+			logging.debug("could not get any info for this session id %s. probably does not exist." % session_id)
+			print e, type(e)
+		
+		if not last_prompt:
+			last_prompt = '1_LackofSelfConfidenceMenu'
 
-			prompt = [p for p in KEY_MAP[self.db.get(extras['session_id'])] if p[0] == key][0]
-			return self.__route_next(p[1], extras)
+		if key not in range(len(KEY_MAP[last_prompt])):
+			next_prompt = last_prompt
+		else:
+			next_prompt = KEY_MAP[last_prompt][key]
+
+		if next_prompt is None:
+			next_prompt = last_prompt
+
+		try:
+			self.db.put(session_id, next_prompt)
+			return self.route_next(session_id)
 		except Exception as e:
 			logging.error("could not grab a prompt code for %s : %d" % \
-				(self.db.get(extras['session_id']), key))
+				(self.db.get('session_id'), key))
 
 			print e, type(e)
 
 		return self.on_hang_up()
 
+	def on_hang_up(self):
+		if super(LackOfSelfConfidence, self).on_hang_up()['ok']:
+			return self.__twilio_hangup(None)
+
 	def on_pick_up(self):
 		if super(LackOfSelfConfidence, self).on_pick_up()['ok']:
-			return self.__route_next('choose_main_menu', {'session_id' : 'default'})
+			return self.route_next(None)
 
 		return self.on_hang_up()
-
-	def on_hang_up(self, response=None):
-		super(LackOfSelfConfidence, self).on_hang_up()
-		
-		if response is None:
-			response = twilio.twiml.Response()
-			response.addPlay(os.path.join("media", "default_goodbye_response.wav"))
-		
-		response.addHangup()
-		return str(response)
 
 if __name__ == "__main__":
 	res = False
