@@ -189,8 +189,8 @@ class LackOfSelfConfidence(MPServerAPI):
 
 	def on_key_pressed(self, key, session_id):
 		# route to next func on stack
-		print "OK KEY: %s (type %s)" % (key, type(key))
-		print "FROM SESSION ID %s" % session_id			
+		#print "OK KEY: %s (type %s)" % (key, type(key))
+		#print "FROM SESSION ID %s" % session_id			
 
 		try:
 			last_prompt = self.db.get(session_id)
@@ -201,14 +201,14 @@ class LackOfSelfConfidence(MPServerAPI):
 		if not last_prompt:
 			last_prompt = '1_LackofSelfConfidenceMenu'
 
-		print "LAST PROMPT: %s" % last_prompt
-		print "ITS KEYS: %s" % KEY_MAP[last_prompt]
+		#print "LAST PROMPT: %s" % last_prompt
+		#print "ITS KEYS: %s" % KEY_MAP[last_prompt]
 
 		if KEY_MAP[last_prompt] is None:
 			return self.__twilio_hangup(last_prompt)
 
 		next_prompt = None
-		
+
 		if key is not None:
 			key = (int(key) - 1)
 			if key not in range(len(KEY_MAP[last_prompt])):
@@ -219,8 +219,8 @@ class LackOfSelfConfidence(MPServerAPI):
 		if next_prompt is None:
 			next_prompt = last_prompt
 
-		print "NEXT_PROMPT: %s" % next_prompt
-		print "ITS KEYS: %s" % KEY_MAP[next_prompt]
+		#print "NEXT_PROMPT: %s" % next_prompt
+		#print "ITS KEYS: %s" % KEY_MAP[next_prompt]
 
 		try:
 			self.db.set(session_id, next_prompt)

@@ -2,6 +2,7 @@
 *.pyc
 
 config.json
+dump.rdb
 
 media/*
 !media/dtmf
