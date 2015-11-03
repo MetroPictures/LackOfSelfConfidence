@@ -179,7 +179,7 @@ class LackOfSelfConfidence(MPServerAPI):
 			self.db.set(session_id, KEY_MAP[prompt])
 			return self.__twilio_redirect(prompt)
 
-		return self.__twilio_gather(prompt)
+		return self.__twilio_prompt(prompt)
 
 	def on_key_pressed(self, key, session_id):
 		# route to next func on stack
