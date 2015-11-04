@@ -3,8 +3,9 @@ from sys import argv, exit
 from time import sleep
 
 from core.api import MPServerAPI
+from core.utils import get_config
 
-BASE_URL = "http://107.21.110.110:49159"
+BASE_URL, NUM_SALT = get_config('base_url', 'our_salt')
 
 ONE = 1
 TWO = 2
