@@ -1,11 +1,14 @@
-import os, json, logging, tornado.web, twilio.twiml
+import os, json, logging, tornado.web, twilio.twiml, redis
 from sys import argv, exit
 from time import sleep
 
 from core.api import MPServerAPI
-from core.utils import get_config
+from core.utils import get_config, num_to_hash
 
-BASE_URL, NUM_SALT = get_config('base_url', 'our_salt')
+BASE_URL, NUM_SALT = get_config(['base_url', 'our_salt'])
+DAILY_CALLS = 1
+GLOBAL_BLACKLIST = 2
+MAX_DAILY_CALLS = 8
 
 ONE = 1
 TWO = 2
@@ -129,14 +132,18 @@ class LackOfSelfConfidence(MPServerAPI):
 		])
 
 		self.db.set('default', "choose_main_menu")
+		
+		self.daily_calls = redis.StrictRedis(host='localhost', port=self.conf['redis_port'], db=DAILY_CALLS)
+		self.global_blacklist = redis.StrictRedis(host='localhost', port=self.conf['redis_port'], db=GLOBAL_BLACKLIST)
+
 		logging.basicConfig(filename=self.conf['d_files']['module']['log'], level=logging.DEBUG)
 
 	class TwilioMappingHandler(tornado.web.RequestHandler):
 		def get(self):			
 			key = self.get_argument('Digits', None, True)
-			session_id = self.get_argument('From', None, True)
+			phone_number = self.get_argument('From', None, True)
 
-			response = self.application.on_key_pressed(key, session_id)
+			response = self.application.on_key_pressed(key, num_to_hash(phone_number, NUM_SALT))
 			logging.debug(str(response))
 
 			self.finish(str(response))
@@ -172,7 +179,29 @@ class LackOfSelfConfidence(MPServerAPI):
 
 		super(LackOfSelfConfidence, self).on_hang_up()
 		return result
-	
+
+	def __twilio_reject(self):
+		result = twilio.twiml.Response()
+		result.addReject()
+
+		return result
+
+	def daily_reset(self):
+		self.daily_calls.flushdb()
+		return True
+
+	def report_abusive_number(self, dipshit):
+		try:
+			global_blacklist = json.loads(self.global_blacklist.get("global_blacklist"))
+		except Exception as e:
+			print "No global blacklist yet, though..."
+			global_blacklist = []
+
+		global_blacklist.append(dipshit)
+		self.global_blacklist.set("global_blacklist", json.dumps(global_blacklist))
+
+		return True
+
 	def route_next(self, session_id, init=False):
 		if init:
 			prompt = '1_LackofSelfConfidenceMenu'
@@ -220,9 +249,6 @@ class LackOfSelfConfidence(MPServerAPI):
 		if next_prompt is None:
 			next_prompt = last_prompt
 
-		#print "NEXT_PROMPT: %s" % next_prompt
-		#print "ITS KEYS: %s" % KEY_MAP[next_prompt]
-
 		try:
 			self.db.set(session_id, next_prompt)
 			return self.route_next(session_id)
@@ -234,7 +260,41 @@ class LackOfSelfConfidence(MPServerAPI):
 
 		return self.__twilio_hangup(None)
 
-	def on_pick_up(self, session_id):
+	def in_master_blacklist(self, phone_number):
+		try:
+			global_blacklist = json.loads(self.global_blacklist.get("global_blacklist"))
+		except Exception as e:
+			print "No global blacklist yet, hooray!"
+			return False
+
+		if phone_number not in global_blacklist:
+			return False
+
+		return True
+
+	def daily_calls_exceeded(self, session_id):
+		try:
+			daily_calls = int(self.daily_calls.get(session_id))
+		except Exception as e:
+			print "Daily calls not initialized yet!"
+			daily_calls = 0
+
+		if daily_calls >= MAX_DAILY_CALLS:
+			return True
+
+		self.daily_calls.set(session_id, (daily_calls + 1))
+		return False
+
+	def on_pick_up(self, phone_number):
+		if in_master_blacklist(phone_number):
+			return str(self.__twilio_reject())
+
+		# number masking begins once we verify caller is not an abuser.
+		session_id = num_to_hash(phone_number, NUM_SALT)
+
+		if daily_calls_exceeded(session_id):
+			return str(self.__twilio_reject())
+
 		self.db.delete(session_id)
 		return str(self.route_next(session_id, init=True))
 
