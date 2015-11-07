@@ -164,7 +164,7 @@ class LackOfSelfConfidence(MPServerAPI):
 	def __twilio_redirect(self, prompt):
 		result = twilio.twiml.Response()
 		result.addPlay(os.path.join("media", "%s.mp3" % prompt))
-		result.addRedirect("%s/mapping" % BASE_URL, method="GET")
+		result.addRedirect("%s:%d/mapping" % (BASE_URL, self.conf['api_port']), method="GET")
 
 		return result
 
