@@ -260,6 +260,8 @@ class LackOfSelfConfidence(MPServerAPI):
 		return self.__twilio_hangup(None)
 
 	def in_master_blacklist(self, phone_number):
+		print "is %s in master blacklist?" % phone_number
+
 		try:
 			global_blacklist = json.loads(self.global_blacklist.get("global_blacklist"))
 		except Exception as e:
@@ -272,8 +274,11 @@ class LackOfSelfConfidence(MPServerAPI):
 		return True
 
 	def daily_calls_exceeded(self, session_id):
+		print "has %s used up all its calls today?" % session_id
+
 		try:
 			daily_calls = int(self.daily_calls.get(session_id))
+			print "caller %s has used up %d calls today." % (session_id, daily_calls)
 		except Exception as e:
 			print "Daily calls not initialized yet!"
 			daily_calls = 0
@@ -285,17 +290,45 @@ class LackOfSelfConfidence(MPServerAPI):
 		return False
 
 	def on_pick_up(self, phone_number):
-		if in_master_blacklist(phone_number):
+		if self.in_master_blacklist(phone_number):
 			return str(self.__twilio_reject())
 
 		# number masking begins once we verify caller is not an abuser.
 		session_id = num_to_hash(phone_number, NUM_SALT)
 
-		if daily_calls_exceeded(session_id):
+		if self.daily_calls_exceeded(session_id):
 			return str(self.__twilio_reject())
 
 		self.db.delete(session_id)
 		return str(self.route_next(session_id, init=True))
+
+	def start(self):
+		if not super(LackOfSelfConfidence, self).start():
+			return False
+
+		from crontab import CronTab
+		from core.vars import BASE_DIR
+
+		cron = CronTab(user=True)
+		
+		job = cron.new(command="python %s" % os.path.join(BASE_DIR, "cron.py"))
+		job.day.every(1)
+		job.enable()
+
+		return job.is_enabled()
+
+	def stop(self):
+		from crontab import CronTab
+		from core.vars import BASE_DIR
+
+		cron = CronTab(user=True)
+		
+		for job in cron:
+			job.enable(False)
+
+		cron.remove_all()
+
+		return super(LackOfSelfConfidence, self).stop()
 
 if __name__ == "__main__":
 	res = False
