@@ -317,19 +317,6 @@ class LackOfSelfConfidence(MPServerAPI):
 
 		return job.is_enabled()
 
-	def stop(self):
-		from crontab import CronTab
-		from core.vars import BASE_DIR
-
-		cron = CronTab(user=True)
-		
-		for job in cron:
-			job.enable(False)
-
-		cron.remove_all()
-
-		return super(LackOfSelfConfidence, self).stop()
-
 if __name__ == "__main__":
 	res = False
 	losc = LackOfSelfConfidence()
