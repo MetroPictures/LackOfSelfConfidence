@@ -5,10 +5,9 @@ from time import sleep
 from core.api import MPServerAPI
 from core.utils import get_config, num_to_hash
 
-BASE_URL, NUM_SALT = get_config(['base_url', 'our_salt'])
+BASE_URL, NUM_SALT, MAX_DAILY_CALLS = get_config(['base_url', 'our_salt', 'max_daily_calls'])
 DAILY_CALLS = 1
 GLOBAL_BLACKLIST = 2
-MAX_DAILY_CALLS = 8
 
 ONE = 1
 TWO = 2
