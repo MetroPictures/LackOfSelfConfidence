@@ -302,21 +302,6 @@ class LackOfSelfConfidence(MPServerAPI):
 		self.db.delete(session_id)
 		return str(self.route_next(session_id, init=True))
 
-	def start(self):
-		if not super(LackOfSelfConfidence, self).start():
-			return False
-
-		from crontab import CronTab
-		from core.vars import BASE_DIR
-
-		cron = CronTab(user=True)
-		
-		job = cron.new(command="python %s" % os.path.join(BASE_DIR, "cron.py"))
-		job.day.every(1)
-		job.enable()
-
-		return job.is_enabled()
-
 if __name__ == "__main__":
 	res = False
 	losc = LackOfSelfConfidence()
